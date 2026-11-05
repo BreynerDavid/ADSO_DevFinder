@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevFinder | Explorador de Usuarios de GitHub</title>
+  <meta name="description" content="Busca y visualiza información detallada de cualquier usuario en GitHub con una interfaz moderna y fluida.">
+  
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="background-decorations" aria-hidden="true">
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+    <div class="glow-orb orb-3"></div>
+  </div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="main-header">
+      <div class="logo">
+        <div class="logo-icon">
+          <i class="fa-brands fa-github"></i>
+        </div>
+        <div class="logo-text">
+          <h1>Dev<span>Finder</span></h1>
+          <p class="tagline">Explorador de perfiles GitHub</p>
+        </div>
+      </div>
+      
+      <button id="themeToggle" class="theme-toggle" aria-label="Cambiar tema">
+        <i class="fa-solid fa-moon icon-dark"></i>
+        <i class="fa-solid fa-sun icon-light"></i>
+      </button>
+    </header>
+
+    <!-- Search Section -->
+    <section class="search-section">
+      <form id="searchForm" class="search-form" role="search" novalidate>
+        <div class="search-input-wrapper">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input 
+            type="text" 
+            id="usernameInput" 
+            placeholder="Escribe un usuario de GitHub (ej. torvalds, midudev)..." 
+            autocomplete="off" 
+            spellcheck="false"
+            required
+          >
+          <button type="button" id="clearBtn" class="clear-btn" aria-label="Limpiar campo" hidden>
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+        <button type="submit" id="searchSubmitBtn" class="btn-primary">
+          <span class="btn-text">Buscar</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </form>
+
+      <!-- Quick suggestions -->
+      <div class="quick-tags">
+        <span class="tag-title"><i class="fa-solid fa-bolt"></i> Populares:</span>
+        <button type="button" class="quick-chip" data-user="torvalds">torvalds</button>
+        <button type="button" class="quick-chip" data-user="midudev">midudev</button>
+        <button type="button" class="quick-chip" data-user="yyx990803">yyx990803</button>
+        <button type="button" class="quick-chip" data-user="shadcn">shadcn</button>
+        <button type="button" class="quick-chip" data-user="gaearon">gaearon</button>
+      </div>
+    </section>
+
+    <!-- Notification / Toast for live alerts -->
+    <div id="toastMessage" class="toast-message" role="alert" aria-live="assertive" hidden></div>
+
+    <!-- Main Content Area -->
+    <main id="mainContent" class="main-content">
+      
+      <!-- State: Error Box -->
+      <div id="errorCard" class="state-card error-card" hidden>
+        <div class="state-icon-circle error-glow">
+          <i class="fa-solid fa-circle-exclamation"></i>
+        </div>
+        <h3 id="errorTitle">Usuario no encontrado</h3>
+        <p id="errorDescription">Verifica que el nombre esté bien escrito o que el perfil sea público en GitHub.</p>
+        <button type="button" class="btn-secondary" id="retryBtn">
+          <i class="fa-solid fa-rotate-right"></i> Intentar de nuevo
+        </button>
+      </div>
+
+      <!-- State: Initial Empty State -->
+      <div id="emptyCard" class="state-card empty-card">
+        <div class="state-icon-circle initial-glow">
+          <i class="fa-solid fa-terminal"></i>
+        </div>
+        <h2>Descubre creadores en GitHub</h2>
+        <p>Ingresa un nombre de usuario en la barra superior o pulsa cualquiera de los perfiles recomendados para consultar sus estadísticas, biografía y repositorios destacados.</p>
+      </div>
+
+      <!-- State: Profile Content -->
+      <section id="profileCard" class="profile-card" hidden>
+        <!-- User Header Banner / Info -->
+        <div class="profile-header">
+          <div class="avatar-container">
+            <img id="userAvatar" src="" alt="Avatar del usuario" class="user-avatar" loading="lazy">
+            <span id="userTypeBadge" class="type-badge">Usuario</span>
+          </div>
+
+          <div class="profile-identity">
+            <div class="name-actions-row">
+              <div>
+                <h2 id="userName" class="user-name">Nombre de Usuario</h2>
+                <a id="userLoginLink" href="#" target="_blank" rel="noopener noreferrer" class="user-handle">
+                  @usuario
+                </a>
+              </div>
+              <a id="githubProfileBtn" href="#" target="_blank" rel="noopener noreferrer" class="btn-github-link">
+                <span>Ver en GitHub</span>
+                <i class="fa-solid fa-arrow-up-right-from-square"></i>
+              </a>
+            </div>
+
+            <p id="userCreatedAt" class="user-joined">
+              <i class="fa-regular fa-calendar"></i> Se unió el <span>--</span>
+            </p>
+          </div>
+        </div>
+
+        <!-- Bio -->
+        <p id="userBio" class="user-bio">Biografía no disponible.</p>
+
+        <!-- Stats Grid -->
+        <div class="stats-panel">
+          <div class="stat-item">
+            <span class="stat-icon"><i class="fa-solid fa-book-bookmark"></i></span>
+            <div class="stat-data">
+              <span class="stat-label">Repositorios</span>
+              <strong id="statRepos" class="stat-number">0</strong>
+            </div>
+          </div>
+
+          <div class="stat-item">
+            <span class="stat-icon"><i class="fa-solid fa-users"></i></span>
+            <div class="stat-data">
+              <span class="stat-label">Seguidores</span>
+              <strong id="statFollowers" class="stat-number">0</strong>
+            </div>
+          </div>
+
+          <div class="stat-item">
+            <span class="stat-icon"><i class="fa-solid fa-user-plus"></i></span>
+            <div class="stat-data">
+              <span class="stat-label">Siguiendo</span>
+              <strong id="statFollowing" class="stat-number">0</strong>
+            </div>
+          </div>
+
+          <div class="stat-item">
+            <span class="stat-icon"><i class="fa-solid fa-code-fork"></i></span>
+            <div class="stat-data">
+              <span class="stat-label">Gists</span>
+              <strong id="statGists" class="stat-number">0</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Meta Details Info (Location, Company, Website, Twitter) -->
+        <div class="meta-details-grid">
+          <div id="metaLocation" class="meta-item">
+            <i class="fa-solid fa-location-dot"></i>
+            <span class="meta-text">No disponible</span>
+          </div>
+
+          <div id="metaCompany" class="meta-item">
+            <i class="fa-solid fa-building"></i>
+            <span class="meta-text">No disponible</span>
+          </div>
+
+          <div id="metaBlog" class="meta-item">
+            <i class="fa-solid fa-link"></i>
+            <span class="meta-text">No disponible</span>
+          </div>
+
+          <div id="metaTwitter" class="meta-item">
+            <i class="fa-brands fa-x-twitter"></i>
+            <span class="meta-text">No disponible</span>
+          </div>
+        </div>
+
+        <!-- Top Repositories Section -->
+        <div class="repos-section">
+          <div class="repos-header">
+            <h3><i class="fa-solid fa-code-branch"></i> Repositorios Populares</h3>
+            <span id="reposCountBadge" class="counter-pill">Top 6</span>
+          </div>
+          <div id="reposGrid" class="repos-grid">
+            <!-- Repositories rendered dynamically -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
